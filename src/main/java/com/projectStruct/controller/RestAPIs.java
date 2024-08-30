@@ -4,8 +4,13 @@ import java.net.URI;
 import java.util.List;
 import java.util.Locale;
 
+import javax.swing.text.html.parser.Entity;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,12 +45,17 @@ public class RestAPIs {
 	}
 
 	@GetMapping("/users/{userId}")
-	public UserBean userById(@PathVariable int userId) {
+	public EntityModel<UserBean> userById(@PathVariable int userId) {
 		UserBean user = userService.findUserById(userId);
 		if (user == null)
 			throw new UserNotFoundException("id:" + userId);
+		
+		EntityModel<UserBean> entityModel = EntityModel.of(user); // for hateoas
+		WebMvcLinkBuilder  link = linkTo(methodOn(this.getClass()).allUser());
+		
+		entityModel.add(link.withRel("all-user"));
 
-		return user;
+		return entityModel;
 	}
 
 	@DeleteMapping("/users/{userId}")
