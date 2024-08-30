@@ -1,13 +1,15 @@
 package com.projectStruct.filtering;
 
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-@JsonIgnoreProperties("field1")  //way 1
+//@JsonIgnoreProperties("field1")  //way 1 Static filtering
+@JsonFilter("FilterBeanFilter") // Dynamic filtering
 public class FilterBean {
 	private String field1;
 	
-	@JsonIgnore   // way 2
+	//@JsonIgnore   // way 2 Static filtering
 	private String field2;
 	
 	private String field3;
