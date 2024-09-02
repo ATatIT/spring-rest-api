@@ -3,10 +3,11 @@ package com.projectStruct.controller;
 import java.net.URI;
 import java.util.List;
 import java.util.Locale;
-
-import javax.swing.text.html.parser.Entity;
+import java.util.Optional;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.hateoas.EntityModel;
@@ -21,38 +22,40 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.projectStruct.bean.UserBean;
-import com.projectStruct.daoservices.userDao;
+import com.projectStruct.entity.UserEntity;
 import com.projectStruct.exceptionhandeling.UserNotFoundException;
+import com.projectStruct.repository.UserRepository;
 
 import jakarta.validation.Valid;
 
 @RestController
 public class RestAPIs {
 
-	userDao userService;
 	private MessageSource massageSource;
-
-	public RestAPIs(userDao userService, MessageSource massageSource) {
-		super();
-		this.userService = userService;
-		this.massageSource = massageSource;
-	}
-
+	
+	/*
+	 * userDao userService;
+	 * 
+	 * public RestAPIs(userDao userService, MessageSource massageSource) { super();
+	 * this.userService = userService; this.massageSource = massageSource; }
+	 */
+	@Autowired
+	UserRepository userRepository;
 
 	@GetMapping("/users")
-	public List<UserBean> allUser() {
-		return userService.findAllUser();
+	public List<UserEntity> allUser() {
+		return userRepository.findAll();
 	}
 
 	@GetMapping("/users/{userId}")
-	public EntityModel<UserBean> userById(@PathVariable int userId) {
-		UserBean user = userService.findUserById(userId);
+	public EntityModel<Optional<UserEntity>> userById(@PathVariable int userId) {
+		Optional<UserEntity> user = userRepository.findById(userId);
 		if (user == null)
 			throw new UserNotFoundException("id:" + userId);
-		
-		EntityModel<UserBean> entityModel = EntityModel.of(user); // for hateoas
-		WebMvcLinkBuilder  link = linkTo(methodOn(this.getClass()).allUser());
-		
+
+		EntityModel<Optional<UserEntity>> entityModel = EntityModel.of(user); // for hateoas
+		WebMvcLinkBuilder link = linkTo(methodOn(this.getClass()).allUser());
+
 		entityModel.add(link.withRel("all-user"));
 
 		return entityModel;
@@ -60,23 +63,22 @@ public class RestAPIs {
 
 	@DeleteMapping("/users/{userId}")
 	public void deleteUserById(@PathVariable int userId) {
-		userService.deleteUserById(userId);
+		userRepository.deleteById(userId);
 	}
 
 	// Enhancing POST Method to return correct HTTP Status Code and Location URI
 	@PostMapping("/users")
-	public ResponseEntity<UserBean> newUser(@Valid @RequestBody UserBean user) {
-		UserBean saveUser = userService.saveUser(user);
+	public ResponseEntity<UserBean> newUser(@Valid @RequestBody UserEntity user) {
+		UserEntity saveUser = userRepository.save(user);
 
 		URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(saveUser.getId())
 				.toUri();
 		return ResponseEntity.created(location).build();
 	}
 
-	
 	@GetMapping("/hello")
 	public String helloUser() {
-		Locale locale = LocaleContextHolder.getLocale();  
+		Locale locale = LocaleContextHolder.getLocale();
 		return massageSource.getMessage("good.morning.message", null, "Default Message", locale);
 	}
 
