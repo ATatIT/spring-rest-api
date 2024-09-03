@@ -22,8 +22,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.projectStruct.bean.UserBean;
+import com.projectStruct.entity.PostEntity;
 import com.projectStruct.entity.UserEntity;
 import com.projectStruct.exceptionhandeling.UserNotFoundException;
+import com.projectStruct.repository.PostRepository;
 import com.projectStruct.repository.UserRepository;
 
 import jakarta.validation.Valid;
@@ -32,7 +34,7 @@ import jakarta.validation.Valid;
 public class RestAPIs {
 
 	private MessageSource massageSource;
-	
+
 	/*
 	 * userDao userService;
 	 * 
@@ -42,6 +44,9 @@ public class RestAPIs {
 	@Autowired
 	UserRepository userRepository;
 
+	@Autowired
+	PostRepository postRepository;
+	
 	@GetMapping("/users")
 	public List<UserEntity> allUser() {
 		return userRepository.findAll();
@@ -80,6 +85,31 @@ public class RestAPIs {
 	public String helloUser() {
 		Locale locale = LocaleContextHolder.getLocale();
 		return massageSource.getMessage("good.morning.message", null, "Default Message", locale);
+	}
+
+	// for posts
+
+	@GetMapping("/users/{userId}/posts")
+	public List<PostEntity> postForUser(@PathVariable int userId) {
+		Optional<UserEntity> user = userRepository.findById(userId);
+		if (user == null)
+			throw new UserNotFoundException("id:" + userId);
+
+		return user.get().getPost();
+	}
+	
+	@PostMapping("/users/{userId}/posts")
+	public ResponseEntity<Object> savePostForUser(@PathVariable int userId,@Valid @RequestBody PostEntity post) {
+		Optional<UserEntity> user = userRepository.findById(userId);
+		if (user == null)
+			throw new UserNotFoundException("id:" + userId);
+		
+		post.setUser(user.get());
+		PostEntity savePost =  postRepository.save(post);
+
+		URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(savePost.getId())
+				.toUri();
+		return ResponseEntity.created(location).build();
 	}
 
 }

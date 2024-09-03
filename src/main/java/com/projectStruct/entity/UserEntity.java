@@ -1,11 +1,15 @@
 package com.projectStruct.entity;
 
 import java.time.LocalDate;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
 
@@ -21,6 +25,9 @@ public class UserEntity {
 	@Past(message = "Date must be in Past")
 	private LocalDate birthDate;
 	
+	@OneToMany(mappedBy = "user")
+	@JsonIgnore
+	private List<PostEntity> post;
 	
 	public Integer getId() {
 		return id;
@@ -39,6 +46,13 @@ public class UserEntity {
 	}
 	public void setBirthDate(LocalDate birthDate) {
 		this.birthDate = birthDate;
+	}
+	
+	public List<PostEntity> getPost() {
+		return post;
+	}
+	public void setPost(List<PostEntity> post) {
+		this.post = post;
 	}
 	@Override
 	public String toString() {
